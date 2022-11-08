@@ -1,0 +1,155 @@
+version: '3.3'
+
+services:
+  database:
+    hostname: database
+    container_name: anmoga_database
+    image: postgres:13-alpine
+    restart: always
+    environment:
+      TZ: 'Asia/Ho_Chi_Minh'
+      PGTZ: 'Asia/Ho_Chi_Minh'
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - ./docker/db/postgres/data/:/var/lib/postgresql/data
+      - ./docker/db/postgres/postgres.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - backend
+    env_file:
+      - .env
+    links:
+      - fluent-bit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: database
+
+  # redis ------------------------------------------
+  redis:
+    hostname: redis
+    image: redis:6.2.5-alpine
+    restart: always
+    ports:
+      - ${REDIS_PORT}:6379
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    env_file:
+      - .env
+    networks:
+      - backend
+    links:
+      - fluent-bit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: cache
+
+  # Rabbit MQ --------------------------------
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:3.9.20-management-alpine
+    container_name: 'rabbitmq-server'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./docker/rabbitmq/data/:/var/lib/rabbitmq
+    #      - ./docker/rabbitmq/log/:/var/log/rabbitmq
+    env_file:
+      - .env
+    networks:
+      - backend
+    links:
+      - fluent-bit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: rabbitmq
+  
+#  fluent-bit --------------------------------
+  fluent-bit:
+    hostname: fluentd
+    build:
+      context: ./docker/fluent-bit
+      dockerfile: Dockerfile
+    container_name: fluent-bit
+    environment:
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    networks:
+      - backend
+
+  # loki --------------------------------    
+  loki:
+    image: grafana/loki:latest
+    restart: on-failure
+    container_name: loki
+    expose:
+      - "3100"
+    networks:
+      - backend
+    links:
+      - fluent-bit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: loki
+
+  # grafana --------------------------------    
+  grafana:
+    image: grafana/grafana:latest
+    restart: on-failure
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+    networks:
+      - backend
+    links:
+      - fluent-bit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: grafana
+
+  # renderer --------------------------------  
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    restart: on-failure
+    container_name: grafana-image-renderer
+    expose:
+      - "8081"
+    environment:
+      ENABLE_METRICS: "true"
+    networks:
+      - backend
+    links:
+      - fluent-bit
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+        tag: renderer
+
+networks:
+  backend:
+    driver: bridge

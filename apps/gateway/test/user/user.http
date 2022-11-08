@@ -1,0 +1,20 @@
+# curl -X 'GET' 
+#  'http://localhost:3001/api/v1/users/get-user?pageSize=10&pageNumber=1&searchFields%5B%5D=firstName&searchFields%5B%5D=lastName&searchFields%5B%5D=email&searchFields%5B%5D=personnelCode&searchFields%5B%5D=nationality&searchFields%5B%5D=address&searchFields%5B%5D=phone&searchFields%5B%5D=numberCMT&searchFields%5B%5D=addressForIssuingCMT&searchFields%5B%5D=contractNumber&searchFields%5B%5D=district&searchFields%5B%5D=province&searchFields%5B%5D=ward&searchFields%5B%5D=companyName&searchFields%5B%5D=positionName&searchFields%5B%5D=departmentName&searchFields%5B%5D=branchName' 
+#  -H 'accept: application/json' 
+#  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdXBlcmFkbWluQHN1cGVyYWRtaW4uY29tIiwidWF2IjoiMSIsImlhdCI6MTY2MjU3MzcyNiwiZXhwIjoxNjY1MTY1NzI2fQ.9d9NmdxK9fwed4i1LmABJyE3Rpc_8Xp6hpEgDIH7Gn0'
+GET http://localhost:3001/api/v1/users/get-user?pageSize=10&pageNumber=1&searchFields%5B%5D=firstName&searchFields%5B%5D=lastName&searchFields%5B%5D=email&searchFields%5B%5D=personnelCode&searchFields%5B%5D=nationality&searchFields%5B%5D=address&searchFields%5B%5D=phone&searchFields%5B%5D=numberCMT&searchFields%5B%5D=addressForIssuingCMT&searchFields%5B%5D=contractNumber&searchFields%5B%5D=district&searchFields%5B%5D=province&searchFields%5B%5D=ward&searchFields%5B%5D=companyName&searchFields%5B%5D=positionName&searchFields%5B%5D=departmentName&searchFields%5B%5D=branchName
+accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdXBlcmFkbWluQHN1cGVyYWRtaW4uY29tIiwidWF2IjoiMSIsImlhdCI6MTY2MjU3MzcyNiwiZXhwIjoxNjY1MTY1NzI2fQ.9d9NmdxK9fwed4i1LmABJyE3Rpc_8Xp6hpEgDIH7Gn0
+
+###
+
+POST http://localhost:3001/api/v1/users/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@superadmin.com",
+  "password": "123123"
+}
+
+###
+

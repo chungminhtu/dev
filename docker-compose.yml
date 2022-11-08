@@ -1,0 +1,82 @@
+version: '3.3'
+
+services:
+  database:
+    hostname: database
+    container_name: anmoga_database
+    image: postgres:13.6-alpine
+    restart: always
+    environment:
+      TZ: 'Asia/Ho_Chi_Minh'
+      PGTZ: 'Asia/Ho_Chi_Minh'
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - ./docker/db/postgres/data/:/var/lib/postgresql/data
+      - ./docker/db/postgres/postgres.conf:/etc/postgresql/postgresql.conf
+      - ./docker/db/postgres/init/:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+    env_file:
+      - .env
+  
+  # redis ------------------------------------------
+  redis:
+    hostname: redis
+    image: redis:6.2.5-alpine
+    restart: always
+    command: redis-server --save 60 1 --requirepass ${REDIS_PASSWORD} --loglevel warning
+    ports:
+      - ${REDIS_PORT}:6379
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    env_file:
+      - .env
+    networks:
+      - backend
+
+  # Rabbit MQ --------------------------------
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:3.9.20-management-alpine
+    container_name: 'rabbitmq-server'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./docker/rabbitmq/data/:/var/lib/rabbitmq
+#      - ./docker/rabbitmq/log/:/var/log/rabbitmq
+    env_file:
+      - .env
+    networks:
+      - backend
+  
+  # MQTT
+  mosquitto:
+    image: eclipse-mosquitto:2.0.14-openssl
+    restart: always
+    ports:
+      - '1883:1883'
+      - '8883:8883'
+    volumes:
+      - ./docker/mosquitto/certs:/mosquitto/certs
+      - ./docker/mosquitto/conf.d:/mosquitto/config
+      - ./docker/mosquitto/log:/mosquitto/log
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/mosquitto/data:/mosquitto/data
+    env_file:
+      - .env
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge

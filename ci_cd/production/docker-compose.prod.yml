@@ -1,0 +1,99 @@
+version: '3.3'
+
+services:
+  database:
+    hostname: database
+    container_name: anmoga_database
+    image: postgres:13-alpine
+    restart: always
+    environment:
+      TZ: 'Asia/Ho_Chi_Minh'
+      PGTZ: 'Asia/Ho_Chi_Minh'
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - ./docker/db/postgres/data/:/var/lib/postgresql/data
+      - ./docker/db/postgres/postgres.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - backend
+    env_file:
+      - .env
+
+  # redis ------------------------------------------
+  redis:
+    hostname: redis
+    image: redis:6.2.5-alpine
+    restart: always
+    ports:
+      - ${REDIS_PORT}:6379
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    env_file:
+      - .env
+    networks:
+      - backend
+
+  # Rabbit MQ --------------------------------
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:3.9.20-management-alpine
+    container_name: rabbitmq-server
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./docker/rabbitmq/data/:/var/lib/rabbitmq
+    #      - ./docker/rabbitmq/log/:/var/log/rabbitmq
+    env_file:
+      - .env
+    networks:
+      - backend
+        
+  # gateway --------------------------------  
+  gateway:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+    image: vohoang/anmoga-be-gateway
+    restart: unless-stopped
+    hostname: gateway
+    container_name: gateway-server
+    env_file:
+      - .env
+    environment:
+      PUBLIC_IP: gateway
+      DB_HOST: database
+      REDIS_HOST: redis
+      RABBITMQ_URL: amqp://vohoang:123123@rabbitmq:5672
+    ports:
+      - ${GATEWAY_PORT}:3001
+      - ${USER_SERVICE_PORT}:3002
+      - ${TOKEN_SERVICE_PORT}:3003
+      - ${POSITION_SERVICE_PORT}:3004
+      - ${FILE_SERVICE_PORT}:3005
+      - ${BRANCH_SERVICE_PORT}:3006
+      - ${PRODUCT_SERVICE_PORT}:3007
+      - ${COMPANY_SERVICE_PORT}:3008
+      - ${MARKETING_SERVICE_PORT}:3009
+      - ${ROLE_SERVICE_PORT}:3010
+      - ${DEPARTMENT_SERVICE_PORT}:3011
+      - ${CUSTOMER_SERVICE_PORT}:3012
+      - ${MAILER_SERVICE_PORT}:3013
+      - ${SERVICE_SERVICE_PORT}:3014
+    networks:
+      - backend
+    depends_on:
+      - database
+      - rabbitmq
+
+networks:
+  backend:
+    driver: bridge

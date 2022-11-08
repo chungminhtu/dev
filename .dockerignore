@@ -1,0 +1,14 @@
+# comment
+logs/*
+/node_modules
+
+## git
+.git
+.gitignore
+
+## docker
+.dockerignore
+docker-volumes
+
+docker/db/postgres/data
+docker/rabbitmq/data
