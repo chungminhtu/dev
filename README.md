@@ -5,13 +5,13 @@ Api doc: [http://hostname/apidoc](http://hostname/apidoc) \
 ## Installation
 Install Node18, pm2, docker, docker-compose
 ```bash
-cd anmoga-proj
+cd dreamld-proj
 npm install
 npm i -g pm2
 ```
 or
 ```bash
-cd anmoga-proj
+cd dreamld-proj
 npm i -g pm2
 yarn install
 ```
